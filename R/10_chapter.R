@@ -102,10 +102,6 @@ print.xtable(xtable(tab1, digits = c(0,0,0,2), align = c(rep("l",1),rep("r",3)),
 
 ## Figure 10.2
 
-psz <- 1
-lsz <- 1
-transalpha <- 0.4
-
 library(reshape2)
 
 pts1 <- data.frame(
@@ -127,12 +123,16 @@ pts3 <- data.frame(
 )
 
 pts <- rbind(pts1, pts2, pts3)
-pts$panel <- factor(pts$panel, levels = c("pois_x", "pois_logx", "nb_logx"))
+pts$panel <- factor(
+  pts$panel,
+  levels = c("pois_x", "pois_logx", "nb_logx")
+)
 
 ## fitted quantile curves: model 1
 xx <- seq(min(dd$x), max(dd$x), length = 400)
 lambda <- exp(cbind(1, xx) %*% coef(fit1))
 qhat <- sapply(probs, function(p) qpois(p, lambda = lambda))
+
 df1 <- melt(qhat)
 df1$x <- rep(xx, length(probs))
 df1$p <- factor(df1$Var2)
@@ -142,6 +142,7 @@ df1$panel <- "pois_x"
 xx <- seq(min(dd$logx), max(dd$logx), length = 400)
 lambda <- exp(cbind(1, xx) %*% coef(fit2))
 qhat <- sapply(probs, function(p) qpois(p, lambda = lambda))
+
 df2 <- melt(qhat)
 df2$x <- rep(xx, length(probs))
 df2$p <- factor(df2$Var2)
@@ -151,15 +152,54 @@ df2$panel <- "pois_logx"
 xx <- seq(min(dd$logx), max(dd$logx), length = 400)
 mu <- exp(cbind(1, xx) %*% coef(fit3))
 qhat <- sapply(probs, function(p) qnbinom(p, size = fit3$theta, mu = mu))
+
 df3 <- melt(qhat)
 df3$x <- rep(xx, length(probs))
 df3$p <- factor(df3$Var2)
 df3$panel <- "nb_logx"
 
 curves <- rbind(df1, df2, df3)
-curves$panel <- factor(curves$panel, levels = c("pois_x", "pois_logx", "nb_logx"))
+curves$panel <- factor(
+  curves$panel,
+  levels = c("pois_x", "pois_logx", "nb_logx")
+)
 
-g <- ggplot() + geom_point(data = pts, aes(x = x, y = y), shape = 16, size = psz, alpha = transalpha) + geom_line( data = curves, aes(x = x, y = value, group = p, color = p), linewidth = lsz) + facet_wrap(~ panel, scales = "free_x", nrow = 1) + coord_cartesian(ylim = c(0, 1350)) + scale_color_grey(start = 0.8, end = 0) + labs(x = NULL, y = "Number of bindings") + theme(legend.position = "none", strip.text = element_blank(), strip.background = element_blank())
+
+psz <- 1
+lsz <- 1
+transalpha <- 0.4
+colg <- "grey70"
+
+g <- ggplot() +
+  geom_point(
+    data = pts,
+    aes(x = x, y = y),
+    shape = 16,
+    size = psz,
+    alpha = transalpha
+  ) +
+  geom_line(
+    data = curves,
+    aes(x = x, y = value, group = p, color = p),
+    linewidth = lsz
+  ) +
+  facet_wrap(
+    ~ panel,
+    scales = "free_x",
+    nrow = 1,
+    labeller = as_labeller(c(
+      pois_x    = "Poisson~(x)",
+      pois_logx = "Poisson~(log[2]~x)",
+      nb_logx   = "NB~(log[2]~x)"
+    ), label_parsed)
+  ) +
+  coord_cartesian(ylim = c(0, 1350)) +
+  scale_color_grey(start = 0.8, end = 0) +
+  labs(x = "Esterase", y = "Number of bindings") +
+  theme(legend.position = "none",
+    strip.background = element_rect(colour = colg, fill = colg), strip.text = element_text(face = "bold", size = 13)
+  )
+
 g
 
 ## R Code 10.1
@@ -231,16 +271,16 @@ g
 
 ## R Code 10.3
 
-# find p such that Q(p) is close to NB mean
+# find a model-implied p such that Q(p) is close to the NB mean
 mu <- fitted(fit.nb)
-pstar <- mean(dd$y - mu < 0)
+pstar <- mean(pnbinom(floor(mu), size = fit.nb$theta, mu = mu))
 pstar
 # error when using mean as quantile pstar of NB
 max(abs(mu - qnbinom(pstar, size = fit.nb$theta, mu = mu))/mu)
 # fit quantile model for p = pstar
 set.seed(123)
 fit.rq_pstar <- rq.counts(y ~ logx, data = dd, tau = pstar)
-# difference between NB mean and distribution-free quantile pstar
+# error when using the NB mean as an approximation to Q(pstar)
 max(abs(mu - predict(fit.rq_pstar))/mu)
 # compare standard errors of coefficients estimates
 fit.rq_pstar$tTable[,1:2]
@@ -287,7 +327,7 @@ dd <- fars
 dd$offset <- log(ifelse(dd$weekend == 1, 2, 5))
 # replace zero counts with small constant
 dd$y <- ifelse(dd$count == 0, 0.1, dd$count)
-# trasform longitude and latitude
+# transform longitude and latitude
 theta_c <- 37.5*pi/180
 phi_c <- -96.5*pi/180
 lat_rad <- dd$latitude*pi/180
@@ -302,6 +342,8 @@ fit.midrq <- midrq(y ~ weekend + lat_cos + lat_sin + lon_cos + lon_sin, tau = c(
 summary(fit.midrq, numerical = TRUE)
 # mid-probability range
 attr(fit.midrq$midFit$G, "range")
+# weekend effect
+100*(exp(coef(fit.midrq)["weekend",])-1)
 
 ## Figure 10.6
 
