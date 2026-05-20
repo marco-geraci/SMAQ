@@ -136,7 +136,7 @@ du <- 0.1
 
 y <- USbirths2001$bw
 x <- 1*(USbirths2001$multiple == 1)
-# female prevalence
+# multiple birth prevalence
 print(px <- mean(x))
 # LBW prevalence by sex
 print(LBW0 <- mean(y[x == 0] <= 2500))
