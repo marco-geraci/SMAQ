@@ -23,6 +23,7 @@
 ###################################################
 
 ## R Code 3.1
+
 qlss(fun = "qnorm", probs = c(0.1, 0.4))
 
 ## Table 3.1
@@ -96,7 +97,7 @@ gg[[4]] <- ggplot() + geom_bar(data = dd3, aes(x = x, y = y), stat = "identity",
 
 marrangeGrob(gg, ncol = 2, nrow = 2, top = "")
 
-## Code fragment
+## R Code 3.2
 
 library(reldist)
 tapply(eusilc2015$EDI, eusilc2015$Country, gini)
@@ -133,7 +134,7 @@ gg[[2]] <- ggplot(faithful, aes(x = waiting, linetype = f)) + stat_ecdf(geom = "
 
 marrangeGrob(gg, ncol = 2, nrow = 1, top = "")
 
-## R Code 3.2
+## R Code 3.3
 
 data(faithful)
 x <- as.numeric(faithful$eruptions >= cutoff)
@@ -149,7 +150,7 @@ rownames(mat) <- c("x = 0", "x = 1", "Delta")
 round(mat,1)
 
 
-## R Code 3.3
+## R Code 3.4
 
 ks.test(scale(y[x == 0]), "pnorm")
 ks.test(scale(y[x == 1]), "pnorm")
