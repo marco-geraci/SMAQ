@@ -140,6 +140,21 @@ g
 
 ## R Code 9.6
 
+# define grid - must be wide enough to include the minimum
+lambda <- seq(0.1, 2, by = 0.1)
+# selection of lambda for rqss based on SIC
+sic <- rep(NA, length(lambda))
+for(j in 1:length(lambda)){
+    fit <- quantreg::rqss(y ~ qss(x, constraint= "N", lambda = lambda[j]),
+    tau = p)
+    sic[j] <- log(fit$fidelity/n) + 0.5/n*fit$edf*log(n)
+}
+
+# value of lambda that minimises SIC
+lambda[which.min(sic)]
+
+## R Code 9.7
+
 set.seed(123)
 n <- 100
 p <- 0.5
@@ -151,7 +166,7 @@ yhat <- rep(NA, n)
 for(i in 1:n){
     x.c <- x[i] - x
     w <- dnorm(x.c/h)
-    yhat[i] <- rq(y ~ x.c, weights = w, tau = p)$coef[1]
+    yhat[i] <- quantreg::rq(y ~ x.c, weights = w, tau = p)$coef[1]
 }
 
 ## Figure 9.4
@@ -171,7 +186,7 @@ g
 ## Section 9.4
 ###################################################
 
-## R Code 9.7
+## R Code 9.8
 
 set.seed(123)
 n <- 500
@@ -185,7 +200,7 @@ try(nlrq(y ~ a + b*x + sigma*exp(g*x), tau = 0.1, start = ss))
 try(nlrq(y ~ a + b*x + sigma*exp(g*x), tau = 0.5, start = ss))
 try(nlrq(y ~ a + b*x + sigma*exp(g*x), tau = 0.9, start = ss))
 
-## R Code 9.8
+## R Code 9.9
 
 library(nlme)
 # fit a generalised least squares regression
@@ -229,7 +244,7 @@ qq <- ggplot() + geom_line(data = qte, aes(x = x, y = value, group = p, color = 
 
 grid.arrange(gg, qq, heights = c(2, 1), ncol = 1)
 
-## R Code 9.9
+## R Code 9.10
 
 qgg <- function(p, mu, sigma, kappa){
 	qp <- qgamma(p, shape = kappa, scale = 1)/kappa
@@ -268,7 +283,7 @@ probs <- c(0.10, 0.25, 0.50, 0.75, 0.90)
 qhat <- sapply(probs, function(p) qgg(p, mu = muhat, sigma = sigmahat, kappa = kappahat))
 
 
-## Code fragment
+## R Code 9.11
 
 # define quantile as a function of x, given the parameter theta and
 # probability p
@@ -324,7 +339,7 @@ qq <- ggplot() + geom_line(data = qte, aes(x = Age, y = value, group = p, color 
 
 grid.arrange(gg, qq, heights = c(2, 1), ncol = 1)
 
-## R Code 9.10
+## R Code 9.12
 
 set.seed(765)
 R <- 500
@@ -355,16 +370,14 @@ for(i in 1:R){
     nr[i,2] <- mean(y - predict(fit.nlrq) < 0)}
 }
 
-## R Code 9.11
+## R Code 9.13
 
 apply(res[2,2,,], 2, mean, na.rm = TRUE) # mean SE
 apply(res[2,1,,], 2, sd, na.rm = TRUE) # SD of estimates
 apply(nr, 2, mean, na.rm = TRUE) # prop. negative residuals
 
-## R Code 9.12
+## R Code 9.14
 
-# Maximum likelihood estimation of quantile regression coefficients using
-# different parameterisations of the logit-logistic distribution.
 dlogis2 <- function(y, gamma, delta, log = FALSE){
 	num <- delta*exp(gamma)*(y/(1-y))^delta
 	den <- y*(1-y)*(1 + exp(gamma)*(y/(1-y))^delta)^2
@@ -397,20 +410,32 @@ fit.mle <- optim(par = c(0,0,0), loglik_logis, x = cbind(1,x), y = y,
 hessian = TRUE)
 deltahat <- exp(fit.mle$par[3])
 # obtain the same estimates obtained with unitquantreg
-est <- -(fit.mle$par[1:2] + c(log((1-p0)/p0), 0))/deltahat
+betahat <- -(fit.mle$par[1:2] + c(log((1-p0)/p0), 0))/deltahat
 # obtain standard errors with delta method
-Vtheta <- solve(fit.mle$hessian)
+V_thetahat <- solve(fit.mle$hessian)
 G <- matrix(0, nrow = 2, ncol = 3)
-G[1,1] <- -1/deltahat; G[2,2] <- -1/deltahat; G[,3] <- -est
-Vbeta <- G %*% Vtheta %*% t(G)
-se <- sqrt(diag(Vbeta))
+G[1,1] <- -1/deltahat; G[2,2] <- -1/deltahat; G[,3] <- -betahat
+V_betahat <- G %*% V_thetahat %*% t(G)
+se_betahat <- sqrt(diag(V_betahat))
 
-# MLE estimates and SEs with original density
-cbind(est, se)
-# MLE estimates and SEs with quantile-based parameterisation
-summary(fit.uq)[[1]][1:2,1:2]
+## Table 9.1
 
-## R Code 9.13
+tab1 <- data.frame(cbind(summary(fit.uq)[[1]][1:2,1:2], betahat, se_betahat))
+rownames(tab1) <- c("Intercept", "Slope")
+colnames(tab1) <- rep(c("Est.", "SE"), 2)
+
+addtorow <- list()
+addtorow$pos <- list(-1,0,0,0,nrow(tab1))
+addtorow$command <- c("\\toprule",
+" & \\multicolumn{2}{c}{unitquantreg} & \\multicolumn{2}{c}{MLE} \\\\",
+"\\cmidrule(l){2-3}",
+"\\cmidrule(l){4-5}",
+"\\bottomrule"
+)
+
+print.xtable(xtable(tab1, digits = c(0,4,4,4,4), align = c(rep("l",1),rep("r",4)), caption = c("Estimated coefficients and standard errors (SE) of the regression coefficients in R Code \\ref{code:09_14} using \\texttt{unitquantreg} and standard maximum likelihood estimation (MLE).")), caption.placement="top", booktabs = TRUE, math.style.negative = TRUE, type="latex", comment=FALSE, add.to.row = addtorow, include.colnames = FALSE, hline.after = NULL, format.args = list(big.mark = ",", decimal.mark = "."))
+
+## R Code 9.15
 
 fit.cdfq <- cdfquantreg::cdfquantreg(y ~ x | 1, data = dd, family = "logit-logistic")
 # account for parameterisation used in Smithson and Shou (2017)

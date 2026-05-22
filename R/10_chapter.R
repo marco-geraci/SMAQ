@@ -213,7 +213,7 @@ fit.pois
 AER::dispersiontest(fit.pois)
 summary(fit.nb <- glm.nb(y ~ logx, data = dd))
 
-## Code fragment
+## R Code 10.2
 
 # predicted quantiles of fitted negative binomial
 probs <- c(0.10, 0.50, 0.90)
@@ -229,7 +229,7 @@ binom.test(nr[2], n, p = probs[2])$p.value
 ## Section 10.2
 ###################################################
 
-## R Code 10.2
+## R Code 10.3
 
 set.seed(456)
 probs <- c(0.10, 0.50, 0.90)
@@ -269,7 +269,7 @@ df$p <- factor(df$Var2)
 g <- ggplot() + geom_point(data = dd, aes(x = logx, y = y),  shape = 16, size = psz, alpha = transalpha) + geom_line(data = df, aes(x = x, y = value, group = p, color = p), linewidth = lsz) + scale_color_grey(start = 0.8, end = 0) + theme(legend.title = element_blank(), legend.position = "none") + scale_x_continuous(expression(paste("Esterase (", log[2], ")"))) + ylab("Number of bindings") + ylim(c(0,1200))
 g
 
-## R Code 10.3
+## R Code 10.4
 
 # find a model-implied p such that Q(p) is close to the NB mean
 mu <- fitted(fit.nb)
@@ -290,21 +290,27 @@ summary(fit.nb)$coef[,1:2]
 ## Section 10.3
 ###################################################
 
-## Code fragment
+## R Code 10.5
 
+# generate data
 set.seed(123)
 n <- 200
 x <- sample(0:3, n, replace = TRUE)
 y <- floor(x) + floor(x + 1)*sample(1:6, n, replace = TRUE)
+# unique values
 print(z <- sort(unique(y)))
+# fit a logistic regression for each threshold
 X <- cbind(1,x)
 b <- sapply(z, function(z) glm.fit(X, 1*(y <= z),
 family = binomial())$coefficients)
+# estimate CDF
 F <- 1/(1 + exp(-X%*%b))
+# estimate PMF
 M <- t(diff(t(F)))
+# estimate mid-CDF
 G <- F - 0.5 * cbind(F[,1], M)
 
-## R Code 10.4
+## R Code 10.6
 
 library(Qtools)
 set.seed(123)
@@ -318,7 +324,7 @@ control = midrqControl(ecdf_est = "logit"))
 r <- attr(fit$midFit$G, "range")
 t(coef(fit))
 
-## R Code 10.5
+## R Code 10.7
 
 library(Qtools)
 data("fars", package = "Qtools")

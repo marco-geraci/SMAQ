@@ -25,8 +25,6 @@
 ## R Code 11.1
 
 p <- 0.1
-
-# unconstrained
 fit <- rq(fev ~ sex, tau = c(p, 1-p), data = fev)
 coef(fit)
 print(delta <- apply(coef(fit), 1, diff))
@@ -257,7 +255,7 @@ g <- ggplot(heat, aes(x = p, y = age, z = diff)) +
 
 g
 
-## Code fragment
+## R Code 11.5
 
 p_grid <- seq(.05, .95, .01)
 dds <- subset(NHANES, Gender == "female")
@@ -315,7 +313,7 @@ ggplot(subset(df_plot, p >= 0.08 & p <= 0.92), aes(x = p, y = derivative, linety
 ## Section 11.4
 ###################################################
 
-## R Code 11.5
+## R Code 11.6
 
 load(file = "../data/ipums.Rdata")
 
@@ -352,7 +350,7 @@ se = "iid", wL = dpL, wU = dpU))
 library(reldist)
 tapply(ipums$incwage, ipums$sex, gini)
 
-## R Code 11.6
+## R Code 11.7
 
 ## Linear quantile model by age, sex and their interaction
 fit2 <- rq(incwage ~ age*sex, tau = c(0.1,0.9), data = ipums, method = "fn")
