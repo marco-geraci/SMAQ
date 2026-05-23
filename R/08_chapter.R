@@ -172,10 +172,10 @@ dd <- na.omit(dd[,c("bw", "ga_group", "female", "tox", "died", "cause")])
 # about 3.3 million
 nrow(dd)
 # quantile regression at p = 0.1 (note method Frisch-Newton for large size)
-fit <- rq(bw ~ ga_group + female, data = dd, method = "fn", tau = 0.1)
-summary(fit, se = "nid")
+fit.rq <- rq(bw ~ ga_group + female, data = dd, method = "fn", tau = 0.1)
+summary(fit.rq, se = "nid")
 # define sga as indicator of negative residuals
-dd$sga <- as.numeric(residuals(fit) < 0)
+dd$sga <- as.numeric(residuals(fit.rq) < 0)
 # logistic regression for mortality
 fit.glm <- glm(died ~ ga_group + female + sga + tox,
    family = "binomial", data = dd)

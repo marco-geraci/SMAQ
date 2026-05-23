@@ -348,7 +348,7 @@ b <- c(0, -2)
 n <- 1000
 res <- array(NA, dim = c(3,2,R,2))
 nr <- array(NA, dim = c(R,2))
-colnames(nr) <- dimnames(res)[[4]] <- c("mle","nlrq")
+colnames(nr) <- dimnames(res)[[4]] <- c("unitquantreg","nlrq")
 
 for(i in 1:R){
     x <- runif(n, -2, 2)
@@ -370,13 +370,30 @@ for(i in 1:R){
     nr[i,2] <- mean(y - predict(fit.nlrq) < 0)}
 }
 
-## R Code 9.13
+## Table 9.1
 
-apply(res[2,2,,], 2, mean, na.rm = TRUE) # mean SE
-apply(res[2,1,,], 2, sd, na.rm = TRUE) # SD of estimates
+tab1 <- rbind(
+apply(res[2,2,,], 2, mean, na.rm = TRUE), # mean SE
+apply(res[2,1,,], 2, sd, na.rm = TRUE), # SD of estimates
 apply(nr, 2, mean, na.rm = TRUE) # prop. negative residuals
+)
 
-## R Code 9.14
+tab1 <- data.frame(tab1)
+rownames(tab1) <- c("Mean SE", "SD of estimates", "PNR")
+colnames(tab1) <- c("Est.", "SE")
+
+addtorow <- list()
+addtorow$pos <- list(-1,0,0,nrow(tab1))
+addtorow$command <- c("\\toprule",
+" & \\multicolumn{1}{c}{unitquantreg} & \\multicolumn{1}{c}{nlrq} \\\\",
+"\\cmidrule(l){2-3}",
+"\\bottomrule"
+)
+
+print.xtable(xtable(tab1, digits = c(0,4,4), align = c(rep("l",1),rep("r",2)), caption = c("Simulation results from R Code~\\ref{code:09_12}, showing the mean standard error (SE), standard deviation (SD) of the estimates, and proportion of negative residuals (PNR) for \\texttt{unitquantreg} and \\texttt{nlrq}.\\label{tab:09_01}")), caption.placement="top", booktabs = TRUE, math.style.negative = TRUE, type="latex", comment=FALSE, add.to.row = addtorow, include.colnames = FALSE, hline.after = NULL, format.args = list(big.mark = ",", decimal.mark = "."))
+
+
+## R Code 9.13
 
 dlogis2 <- function(y, gamma, delta, log = FALSE){
 	num <- delta*exp(gamma)*(y/(1-y))^delta
@@ -394,7 +411,8 @@ loglik_logis <- function(theta, x, y){
 }
 # generate data from (unit) logistic with given p0
 set.seed(765)
-n <- 1000; p0 <- 0.75; delta <- 2; beta_p0 <- c(0, -2)
+p0 <- 0.75
+n <- 1000; delta <- 2; beta_p0 <- c(0, -2)
 x <- runif(n, -2, 2)
 eta <- cbind(1,x)%*%beta_p0
 mu_p0 <- exp(eta)/(1 + exp(eta))
@@ -418,14 +436,14 @@ G[1,1] <- -1/deltahat; G[2,2] <- -1/deltahat; G[,3] <- -betahat
 V_betahat <- G %*% V_thetahat %*% t(G)
 se_betahat <- sqrt(diag(V_betahat))
 
-## Table 9.1
+## Table 9.2
 
-tab1 <- data.frame(cbind(summary(fit.uq)[[1]][1:2,1:2], betahat, se_betahat))
-rownames(tab1) <- c("Intercept", "Slope")
-colnames(tab1) <- rep(c("Est.", "SE"), 2)
+tab2 <- data.frame(cbind(summary(fit.uq)[[1]][1:2,1:2], betahat, se_betahat))
+rownames(tab2) <- c("Intercept", "Slope")
+colnames(tab2) <- rep(c("Est.", "SE"), 2)
 
 addtorow <- list()
-addtorow$pos <- list(-1,0,0,0,nrow(tab1))
+addtorow$pos <- list(-1,0,0,0,nrow(tab2))
 addtorow$command <- c("\\toprule",
 " & \\multicolumn{2}{c}{unitquantreg} & \\multicolumn{2}{c}{MLE} \\\\",
 "\\cmidrule(l){2-3}",
@@ -433,9 +451,9 @@ addtorow$command <- c("\\toprule",
 "\\bottomrule"
 )
 
-print.xtable(xtable(tab1, digits = c(0,4,4,4,4), align = c(rep("l",1),rep("r",4)), caption = c("Estimated coefficients and standard errors (SE) of the regression coefficients in R Code \\ref{code:09_14} using \\texttt{unitquantreg} and standard maximum likelihood estimation (MLE).")), caption.placement="top", booktabs = TRUE, math.style.negative = TRUE, type="latex", comment=FALSE, add.to.row = addtorow, include.colnames = FALSE, hline.after = NULL, format.args = list(big.mark = ",", decimal.mark = "."))
+print.xtable(xtable(tab2, digits = c(0,4,4,4,4), align = c(rep("l",1),rep("r",4)), caption = c("Estimates and standard errors (SE) of the $p_{0}$-specific regression coefficients in R Code \\ref{code:09_13} using \\texttt{unitquantreg} and standard maximum likelihood estimation (MLE).\\label{tab:09_02}")), caption.placement="top", booktabs = TRUE, math.style.negative = TRUE, type="latex", comment=FALSE, add.to.row = addtorow, include.colnames = FALSE, hline.after = NULL, format.args = list(big.mark = ",", decimal.mark = "."))
 
-## R Code 9.15
+## R Code 9.14
 
 fit.cdfq <- cdfquantreg::cdfquantreg(y ~ x | 1, data = dd, family = "logit-logistic")
 # account for parameterisation used in Smithson and Shou (2017)
