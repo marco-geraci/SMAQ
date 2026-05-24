@@ -91,11 +91,11 @@ cl <- "black"
 
 gg <- list()
 gg[[1]] <- ggplot() + geom_bar(data = dd0, aes(x = x, y = y), stat = "identity", width = 0.5, color = "lightgrey", fill = "grey") + geom_hline(yintercept = sk, color = cl, linewidth = lsz, linetype = "dashed") + xlab("") + ylab("Skewness") + coord_cartesian(ylim = c(-1,1)) + theme(text = element_text(size=sz))
-gg[[2]] <- ggplot() + geom_bar(data = dd1, aes(x = x, y = y), stat = "identity", width = 0.5, color = "lightgrey", fill = "grey") + geom_hline(yintercept = k, color = cl, linewidth = lsz, linetype = "dashed") + xlab("Country") + ylab("Kurtosis") + coord_cartesian(ylim = c(1, max(dd1$y))) + theme(text = element_text(size=sz))
+gg[[2]] <- ggplot() + geom_bar(data = dd1, aes(x = x, y = y), stat = "identity", width = 0.5, color = "lightgrey", fill = "grey") + geom_hline(yintercept = k, color = cl, linewidth = lsz, linetype = "dashed") + xlab("") + ylab("Kurtosis") + coord_cartesian(ylim = c(1, max(dd1$y))) + theme(text = element_text(size=sz))
 gg[[3]] <- ggplot() + geom_bar(data = dd2, aes(x = x, y = y), stat = "identity", width = 0.5, color = "lightgrey", fill = "grey") + geom_hline(yintercept = tw, color = cl, linewidth = lsz, linetype = "dashed") + xlab("") + ylab("Tail weight") + coord_cartesian(ylim = c(1, max(dd2$y))) + theme(text = element_text(size=sz))
 gg[[4]] <- ggplot() + geom_bar(data = dd3, aes(x = x, y = y), stat = "identity", width = 0.5, color = "lightgrey", fill = "grey") + geom_hline(yintercept = pk, color = cl, linewidth = lsz, linetype = "dashed") + xlab("Country") + ylab("Peakedness") + coord_cartesian(ylim = c(1, max(dd3$y))) + theme(text = element_text(size=sz))
 
-marrangeGrob(gg, ncol = 2, nrow = 2, top = "")
+marrangeGrob(gg, ncol = 1, nrow = 4, top = "")
 
 ## R Code 3.2
 
@@ -110,13 +110,33 @@ tapply(eusilc2015$EDI, eusilc2015$Country, gini)
 
 load(file = "../data/sc2000wv.Rdata")
 
-colg <- "grey70"
-
 gg <- list()
-gg[[1]] <- ggplot(sc2000wv, aes(x = rank, y = population)) + geom_bar(stat="identity") + scale_x_continuous("Rank") + scale_y_continuous("Population size", breaks = seq(0, 50e3, by = 10e3), labels = sfsmisc::pretty10exp(seq(0, 50e3, by = 10e3)))
-gg[[2]] <- ggplot(sc2000wv, aes(x = population, y=after_stat(density))) + geom_histogram(bins = 10) + scale_x_continuous(expression(paste("Population size (", log[10], ")")),  trans = "log10") + ylab("Density")
+
+gg[[1]] <- ggplot(sc2000wv, aes(x = rank, y = population)) +
+  geom_line() +
+  scale_x_continuous("Rank") +
+  scale_y_log10(
+    expression(paste("Population size (", log[10], ")")),
+    labels = scales::label_number(big.mark = " ")
+  ) +
+  annotation_logticks(sides = "l") +
+  theme(panel.grid.minor = element_blank())
+
+gg[[2]] <- ggplot(sc2000wv, aes(x = population, y = after_stat(density))) +
+  geom_histogram(bins = 10) +
+  scale_x_continuous(
+    expression(paste("Population size (", log[10], ")")),
+    trans = "log10",
+    labels = scales::label_number(big.mark = " ")
+  ) +
+  ylab("Density") + 
+  annotation_logticks(sides = "b") + 
+  theme(panel.grid.minor = element_blank(),
+  axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1)
+  )
 
 marrangeGrob(gg, ncol = 2, nrow = 1, top = "")
+
 
 ## Figure 3.8
 

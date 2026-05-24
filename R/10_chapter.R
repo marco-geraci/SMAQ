@@ -319,8 +319,7 @@ p <- c(1e-5, 0.15, 0.25, 0.5, 0.75, 0.85, 1-1e-5)
 x <- runif(n, 0, 3)
 y <- floor(1 + 2*x) + sample(1:6, n, replace = TRUE)
 range(y)
-fit <- midrq(y ~ x, tau = p, lambda = NULL,
-control = midrqControl(ecdf_est = "logit"))
+fit <- midrq(y ~ x, tau = p, lambda = NULL, control = midrqControl(ecdf_est = "logit"))
 r <- attr(fit$midFit$G, "range")
 t(coef(fit))
 
@@ -353,19 +352,14 @@ attr(fit.midrq$midFit$G, "range")
 
 ## Figure 10.6
 
-dd$rate <- dd$count/exp(dd$offset)*7
+dd$wcount <- dd$count/exp(dd$offset)*7
 dd$group <- factor(dd$weekend, levels = 0:1, labels = c("weekdays", "weekend days"))
-y <- dd$count
-w <- rep(0, max(y)+1)
-w[as.numeric(names(table(y)))+1] <- table(y)
-#names(w) <- 0:max(y)
-df <- data.frame(x = 0:max(y), y = w)
 
 gg <- list()
 
-gg[[1]] <- ggplot(df[-c(1),], aes(x = x, y = y)) + geom_bar(stat="identity", width = 0.01) + scale_x_continuous(expression(paste("Number of crashes (", log[10], ")")),  trans = "log10") + scale_y_log10() + ylab(expression(paste("Frequency (", log[10], ")")))
+gg[[1]] <- ggplot(dd,aes(x = group, y = wcount, fill = group)) + geom_boxplot(outlier.alpha = 0.25) + scale_fill_manual(values = c("white", "grey70"), name = NULL,) + xlab(NULL) + ylab("Number of fatal crashes") + scale_y_sqrt("Fatal crashes per week", breaks = c(0, 10, 50, 100, 250, 500, 750), labels = function(x) ifelse(abs(x - eps) < 1e-12, "0", scales::label_number(accuracy = 1)(x))) + theme(legend.position = "none", panel.grid.minor = element_blank())
 
-gg[[2]] <- ggplot(dd, aes(x = rate, linetype = group)) + stat_ecdf(geom = "step", linewidth = 0.6) + ylab("ECDF") + scale_x_continuous(expression(paste("Number of crashes per week (", log[10], ")")),  trans = "log10")  +  theme(legend.position="top") + labs(linetype="")
+gg[[2]] <- ggplot(dd, aes(x = wcount, linetype = group)) + stat_ecdf(geom = "step", linewidth = 0.6) + ylab("ECDF") + labs(linetype = "") + scale_x_sqrt("Fatal crashes per week", breaks = c(0, 10, 50, 100, 250, 500, 750), labels = function(x) ifelse(abs(x - eps) < 1e-12, "0", scales::label_number(accuracy = 1)(x))) + theme(legend.position = "top", legend.title = element_text(size = 14), panel.grid.minor = element_blank())
 
 marrangeGrob(gg, ncol = 2, nrow = 1, top = "")
 
@@ -398,10 +392,8 @@ lines(p, b - qnorm(0.975)*se, col = 2)
 lines(p, b + qnorm(0.975)*se, col = 2)
 wend <- data.frame(p = p, est = b, se = se, lower = b - qnorm(0.975)*se, upper = b + qnorm(0.975)*se)
 
-colg <- "grey70"
 psz <- 2
 lsz <- 1
-transalpha <- 0.4
 
 g <- ggplot(wend, aes(x = p, y = est)) + geom_line(linewidth = lsz) + geom_point(shape = 16, size = psz) + geom_line(aes(x = p, y = lower), linetype = "dashed", linewidth = lsz) + geom_line(aes(x = p, y = upper), linetype = "dashed", linewidth = lsz) + scale_x_continuous(name = "Quantile index", breaks = 0:10/10, limits = c(0,1)) + ylab("Regression quantile")
 g

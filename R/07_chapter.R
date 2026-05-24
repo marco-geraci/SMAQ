@@ -254,7 +254,7 @@ library(Qtools)
 library(discreteQ)
 
 data("fars", package = "Qtools")
-y <- fars$count
+y <- fars$count[fars$weekend == 0]
 # sample size
 length(y)
 # summary statistics
@@ -264,13 +264,38 @@ p <- c(0.25, .5, .75, .9, .95, .99)
 # estimate quantiles and 95% CI based on 1000 bootstrap replications
 set.seed(321)
 system.time(Qhat <- discreteQ(y, bsrep = 1000, alpha = 0.05))
-cbind(est = Qhat$lb.Q(p), lower = Qhat$Q(p), upper = Qhat$ub.Q(p))
+cbind(est = Qhat$Q(p), lower = Qhat$lb.Q(p), upper = Qhat$ub.Q(p))
 # estimate mid-quantiles and 95% CIs
 system.time({midQ <- midquantile(y, probs = p);
   midQci <- confint(midQ, level = 0.95)})
 midQci
 # recover quantiles from mid-quantiles
 as.numeric(midq2q(midQ))
+
+## Table 7.2
+
+tab2a <- cbind(p = p, est = Qhat$Q(p), lower = Qhat$lb.Q(p), upper = Qhat$ub.Q(p))
+tab2b <- confint(midQ, level = 0.95)
+tab2 <- cbind(tab2a, tab2b)
+
+dig <- matrix(1, 6, 8)
+dig[,2] <- 2
+dig[,c(3:5)] <- 0
+
+addtorow <- list()
+addtorow$pos <- list(-1,0,0,0,0,nrow(tab2))
+addtorow$command <- c("\\toprule",
+" $p$ & \\multicolumn{3}{c}{Ordinary quantile} & \\multicolumn{3}{c}{Mid-quantile} \\\\",
+" & Est. & Lower & Upper & Est. & Lower & Upper \\\\",
+"\\cmidrule(l){2-4}",
+"\\cmidrule(l){5-7}",
+"\\bottomrule")
+header <- function(x){
+paste0('{\\bfseries ', x, '}')
+}
+
+print.xtable(xtable(tab2, digits = dig, align = c("l",rep("r",7)), caption = c("Ordinary quantiles and mid-quantiles with $95\\%$ confidence intervals of number of fatal vehicle crashes as estimated in R Code \\ref{code:07_09}.")), caption.placement="top", booktabs = TRUE, math.style.negative = TRUE, type="latex", comment=FALSE, add.to.row = addtorow, include.rownames = FALSE, include.colnames = FALSE, hline.after = NULL, sanitize.text.function = identity)
+
 
 ## R Code 7.10
 
