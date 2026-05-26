@@ -307,7 +307,7 @@ df_m <- compute_derivative(fit_m, x0 = x0, "Male")
 df_plot <- bind_rows(df_f, df_m)
 names(df_plot)[4] <- "Sex"
 
-ggplot(subset(df_plot, p >= 0.08 & p <= 0.92), aes(x = p, y = derivative, linetype = Sex)) + geom_smooth(se = FALSE, span = 0.2, linewidth = 1.2, color = "black") + ylim(c(-0.02,0)) + labs(x = "p", y = "Derivative of comparison distribution")
+ggplot(subset(df_plot, p >= 0.08 & p <= 0.92), aes(x = p, y = derivative, linetype = Sex)) + geom_smooth(se = FALSE, span = 0.2, linewidth = 1.2, color = "black") + ylim(c(-0.02,0)) + labs(x = "p", y = "Derivative of comparison distribution") + theme(legend.position = "right", legend.text = element_text(size = 12), legend.key.width = unit(2, "line"))
 
 ###################################################
 ## Section 11.4

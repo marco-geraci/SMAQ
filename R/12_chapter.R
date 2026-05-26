@@ -100,8 +100,7 @@ i <- 250
 dd1 <- data.frame(x = c(z, z), y = c(Fhat_fun.rq[[i]](z), Fhat_fun.dr[[i]](z)), gr = gr)
 dd2 <- data.frame(x = z, y = pnorm(z, mean = 1 + 2*x[i], sd = 1))
 
-g <- ggplot(dd1, aes(x = x, y = y)) + geom_step(aes(linetype = gr)) + geom_line(data = dd2, colour = colg) + theme(legend.title = element_blank(), legend.position = "top", legend.spacing.x = unit(1.0, 'cm'), legend.key.width = unit(3, "line"), strip.background = element_rect(colour = colg, fill = colg), strip.text = element_text(face = "bold", size = 13)) +
-xlab("y") + ylab("Cumulative probability")
+g <- ggplot(dd1, aes(x = x, y = y)) + geom_step(aes(linetype = gr)) + geom_line(data = dd2, colour = colg) + xlab("y") + ylab("Cumulative probability") + theme(legend.title = element_blank(), legend.position = "top", legend.spacing.x = unit(1.0, 'cm'), legend.key.width = unit(3, "line"), strip.background = element_rect(colour = colg, fill = colg), legend.text = element_text(size = 12))
 g
 
 ###################################################

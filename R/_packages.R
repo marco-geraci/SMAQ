@@ -6,7 +6,7 @@
 
 pkgs <- c(
   "AER", "EnvStats", "KernSmooth", "MASS", "Qtools",
-  "bbmle", "boot", "cdfquantreg", "conquer", "datasets",
+  "bbmle", "boot", "conquer", "datasets",
   "discreteQ", "evd", "fitdistrplus", "ggplot2", "gridExtra",
   "lpSolve", "lqmm", "microbenchmark", "mplot",
   "nlme", "nlqmm", "numDeriv", "pak",

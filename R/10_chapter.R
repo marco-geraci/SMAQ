@@ -26,7 +26,7 @@
 
 data("esterase", package = "Qtools")
 bks <- (0:11)*100
-ggplot(esterase, aes(x = Count)) + geom_histogram(aes(y = ..density..), breaks = bks) + scale_x_continuous(name = "Number of bindings", limits = c(0,1200)) + ylab("Density")
+ggplot(esterase, aes(x = Count)) + geom_histogram(aes(y = after_stat(density)), breaks = bks) + scale_x_continuous(name = "Number of bindings", limits = c(0,1200)) + ylab("Density")
 
 ## Table 10.1
 
@@ -51,7 +51,6 @@ nr2 <- apply(sweep(-qhat2, 1, y, "+") < 0, 2, mean)*100
 mu <- fitted(fit3)
 qhat3 <- sapply(probs, function(p) qnbinom(p, size = fit3$theta, mu = mu))
 nr3 <- apply(sweep(-qhat3, 1, y, "+") < 0, 2, mean)*100
-
 
 
 nn <- c("Residual deviance (df)", "AIC", "Dispersion test p-value", "NB overdispersion", "PNR")
@@ -357,9 +356,9 @@ dd$group <- factor(dd$weekend, levels = 0:1, labels = c("weekdays", "weekend day
 
 gg <- list()
 
-gg[[1]] <- ggplot(dd,aes(x = group, y = wcount, fill = group)) + geom_boxplot(outlier.alpha = 0.25) + scale_fill_manual(values = c("white", "grey70"), name = NULL,) + xlab(NULL) + ylab("Number of fatal crashes") + scale_y_sqrt("Fatal crashes per week", breaks = c(0, 10, 50, 100, 250, 500, 750), labels = function(x) ifelse(abs(x - eps) < 1e-12, "0", scales::label_number(accuracy = 1)(x))) + theme(legend.position = "none", panel.grid.minor = element_blank())
+gg[[1]] <- ggplot(dd,aes(x = group, y = wcount, fill = group)) + geom_boxplot(outlier.alpha = 0.25) + scale_fill_manual(values = c("white", "grey70"), name = NULL,) + xlab(NULL) + ylab("Number of fatal crashes") + scale_y_sqrt("Fatal crashes per week", breaks = c(0, 10, 50, 100, 250, 500, 750), labels = function(x) ifelse(abs(x) < 1e-12, "0", scales::label_number(accuracy = 1)(x))) + theme(legend.position = "none", panel.grid.minor = element_blank())
 
-gg[[2]] <- ggplot(dd, aes(x = wcount, linetype = group)) + stat_ecdf(geom = "step", linewidth = 0.6) + ylab("ECDF") + labs(linetype = "") + scale_x_sqrt("Fatal crashes per week", breaks = c(0, 10, 50, 100, 250, 500, 750), labels = function(x) ifelse(abs(x - eps) < 1e-12, "0", scales::label_number(accuracy = 1)(x))) + theme(legend.position = "top", legend.title = element_text(size = 14), panel.grid.minor = element_blank())
+gg[[2]] <- ggplot(dd, aes(x = wcount, linetype = group)) + stat_ecdf(geom = "step", linewidth = 0.6) + ylab("ECDF") + labs(linetype = "") + scale_x_sqrt("Fatal crashes per week", breaks = c(0, 10, 50, 100, 250, 500, 750), labels = function(x) ifelse(abs(x) < 1e-12, "0", scales::label_number(accuracy = 1)(x))) + theme(legend.position = "top", legend.text = element_text(size = 12), panel.grid.minor = element_blank())
 
 marrangeGrob(gg, ncol = 2, nrow = 1, top = "")
 

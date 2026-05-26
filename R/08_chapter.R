@@ -136,6 +136,12 @@ V
 # standard errors
 apply(V, 3, function(x) sqrt(diag(x)))
 
+## Code fragment
+
+e <- lm(y ~ x)$residuals
+1/dnorm(qnorm(p, 0, sd(e)), 0, sd(e))
+
+
 ## R Code 8.6
 
 fit.s <- summary(fit, se = "iid", covariance = TRUE)
@@ -149,6 +155,7 @@ cbind(betahat - qnorm(0.975)*se, betahat + qnorm(0.975)*se)
 
 ## R Code 8.7
 
+load(file = "../data/fev.Rdata")
 summary(fev)
 
 ## R Code 8.8
@@ -206,6 +213,75 @@ with(fit.rqs, ncol(sol))-1
 gg <- I(log(fev)) ~ I(age - 10) + I(height - 61) + sex
 kt <- KhmaladzeTest(gg, tau = 1:19/20, nullH = "location", data = fev)
 Qtools::KhmaladzeFormat(kt, epsilon = 0.05)
+
+## Figure 8.9
+
+dd1 <- data.frame(t(fit.rqs$sol[c(1,4),]))
+dd2 <- data.frame(t(fit.rqs$sol[c(1,5),]))
+dd3 <- data.frame(t(fit.rqs$sol[c(1,6),]))
+dd4 <- data.frame(t(fit.rqs$sol[c(1,7),]))
+names(dd1) <- names(dd2) <- names(dd3) <- names(dd4) <- c("x", "y")
+
+lsz <- 1
+sz <- 7
+
+gg <- list()
+
+xmin <- 0.9
+ddr <- dd1[dd1$x > xmin,]
+
+inset1 <- ggplot(dd1, aes(x = x, y = y)) +
+  geom_line(linewidth = 0.5) +
+  coord_cartesian(xlim = c(xmin, 1), ylim = c(3, 3.5), expand = FALSE) +
+  labs(x = NULL, y = NULL) +
+  theme_bw(base_size = sz) +
+  theme(
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_rect(colour = "black", fill = NA, linewidth = 0.6),
+    plot.margin = margin(1, 1, 1, 1),
+    axis.title = element_blank()
+  )
+
+gg[[1]] <- ggplot(dd1, aes(x = x, y = y)) + geom_line(linewidth = lsz) + labs(x = "", y = "Regression quantile", title = "Intercept") + coord_cartesian(ylim = c(1.5, 3.7), clip = "off") + annotation_custom(ggplotGrob(inset1), xmin = 0.02, xmax = 0.65, ymin = 2.75, ymax = 3.75) + geom_line(data = ddr, linewidth = lsz * 1.3, colour = "grey")
+gg[[2]] <- ggplot(dd2, aes(x = x, y = y)) + geom_line(linewidth = lsz) + xlab("Quantile index") + ylab("Regression quantile") + ggtitle("Age") + ylim(c(0,0.2))
+gg[[3]] <- ggplot(dd3, aes(x = x, y = y)) + geom_line(linewidth = lsz) + xlab("") + ylab("") + ggtitle("Height") + ylim(c(0,0.13))
+gg[[4]] <- ggplot(dd4, aes(x = x, y = y)) + geom_line(linewidth = lsz) + xlab("Quantile index") + ylab("") + ggtitle("Sex (male)")
+
+marrangeGrob(gg, ncol = 2, nrow = 2, top = "")
+
+
+## Figure 8.10
+
+fit.rqs <- rq(ff, tau = -1, data = fev)
+p <- fit.rqs$sol["tau",]
+beta0_hat <- fit.rqs$sol["(Intercept)",]
+sf <- rearrange(stepfun(p, c(-Inf, beta0_hat)))
+beta0_hat <- sf(p)
+
+xmin <- 0.9
+dd1 <- data.frame(t(fit.rqs$sol[c(1,4),]))
+names(dd1) <- c("x", "y")
+dd1 <- dd1[dd1$x > xmin,]
+dd2 <- data.frame(x = p, y = beta0_hat)
+dd2 <- dd2[dd2$x > xmin,]
+
+lsz <- 1
+
+gg <- list()
+
+gg[[1]] <- ggplot(dd1, aes(x = x, y = y)) + geom_line(linewidth = lsz) + xlab("Quantile index") + ylab("Regression quantile") + ggtitle("")
+gg[[2]] <- ggplot(dd2, aes(x = x, y = y)) + geom_line(linewidth = lsz) + xlab("Quantile index") + ylab("") + ggtitle("")
+
+marrangeGrob(gg, ncol = 2, nrow = 1, top = "")
+
+## Code fragment
+
+p <- fit.rqs$sol["tau",]
+Q0hat <- fit.rqs$sol["(Intercept)",]
+sf <- rearrange(stepfun(p, c(-Inf, Q0hat)))
+Q0hat <- sf(p)
+plot(p, Q0hat, type = "l", xlim = c(0.9,1), ylim = c(3, 3.5))
 
 ## R Code 8.14
 

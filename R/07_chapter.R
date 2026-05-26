@@ -342,6 +342,8 @@ geom_line(data = ci, aes(x = xit, y = value, group = Var2),
 linetype = "dashed") + geom_abline(intercept = int, slope = slope) +
 xlab("Theoretical") + ylab("Empirical") + xlim(0, 2.45) + ylim(0, 2.45)
 
+## Figure 7.4
+
 gg
 
 ###################################################

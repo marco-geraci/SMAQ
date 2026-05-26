@@ -26,13 +26,14 @@
 
 library(quantreg)
 data(Indometh)
-
+# fit nonlinear median regression
 fit.nlrq <- nlrq(conc ~ SSbiexp(time, A1, lrc1, A2, lrc2),
 data = Indometh, tau = 0.5)
 summary(fit.nlrq)
-fit.nls <- nls(conc ~ SSbiexp(time, A1, lrc1, A2, lrc2),
-data = Indometh)
+# fit nonlinear mean regression
+fit.nls <- nls(conc ~ SSbiexp(time, A1, lrc1, A2, lrc2), data = Indometh)
 summary(fit.nls)
+
 
 # Figure 9.1
 
@@ -76,15 +77,141 @@ y <- exp(eta)*rnorm(n,1,0.2)
 all(y > 0)
 z <- log(y)
 
+# fit nonlinear model
 system.time(fit.nlrq <- nlrq(y ~ exp(a + b*x), tau = 0.9,
 start = list(a = 0, b = 0)))
 summary(fit.nlrq, R = 200)
+
+# fit log-linear model
 system.time(fit.rq <- rq(z ~ x, tau = 0.9, method = "fn"))
 summary(fit.rq, se = "boot", R = 200)
 
 ###################################################
 ## Section 9.2
 ###################################################
+
+# Figure 9.2
+
+
+library(grid)
+
+lambda <- c(-1, -0.5, 0, 0.5, 1)
+lambda_pos <- c(0, 0.5, 1)
+
+y.pos <- seq(0.05, 5, length.out = 500)
+y.unit <- seq(0.001, 0.999, length.out = 500)
+
+make_data <- function(y, fun, name, lambda) {
+  do.call(rbind, lapply(lambda, function(l) {
+    data.frame(y = y,
+               h = fun(y, l),
+               lambda = factor(l, levels = c(-1, -0.5, 0, 0.5, 1)),
+               transformation = name)
+  }))
+}
+
+dd.bc <- make_data(y.pos,  function(y, l) Qtools::bc(y, l), "Box--Cox", lambda)
+dd.ao <- make_data(y.unit, function(y, l) Qtools::ao(y, l, symm = TRUE), "Symmetric AO", lambda_pos)
+dd.mcja <- make_data(y.unit, function(y, l) Qtools::mcjI(y, l, symm = FALSE, dbounded = TRUE), "Asymmetric MCJ", lambda_pos)
+dd.mcjs <- make_data(y.unit, function(y, l) Qtools::mcjI(y, l, symm = TRUE, dbounded = TRUE), "Symmetric MCJ", lambda_pos)
+
+dd.bc <- subset(dd.bc, is.finite(h))
+dd.ao <- subset(dd.ao, is.finite(h))
+dd.mcja <- subset(dd.mcja, is.finite(h))
+dd.mcjs <- subset(dd.mcjs, is.finite(h))
+
+plot_fun <- function(d, title, show.legend = FALSE) {
+  ggplot(d, aes(x = y, y = h, linetype = lambda)) +
+    geom_line(linewidth = 0.6) + coord_cartesian(ylim = c(-6, 6)) + labs(x = "Y", y = "Transformed value", linetype = expression(lambda)) + ggtitle(title) +  theme(legend.position = if (show.legend) "top" else "none", legend.justification = "center", plot.title = element_text(hjust = 0.5))
+}
+
+gg <- list()
+
+gg[[1]] <- ggplot(dd.bc, aes(x = y, y = h, linetype = lambda)) +
+  geom_line(linewidth = lsz, colour = "black") +
+  coord_cartesian(ylim = c(-6, 6)) +
+  labs(x = "", y = expression(h(Y)), linetype = expression(lambda)) +
+  ggtitle("Box-Cox") +
+  theme(
+  plot.title = element_text(hjust = 0.5),
+  legend.position = "top",
+  legend.justification = "center",
+  legend.margin = margin(0,0,0,0),
+  legend.box.margin = margin(50,0,-5,0),
+  legend.key.height = unit(1, "cm"),
+  legend.key.width = unit(3, "line"),
+  legend.text = element_text(size = 15),
+  legend.title = element_text(size = 15),
+  legend.spacing.x = unit(0.7, 'cm')
+) + scale_linetype_manual(
+  labels = parse(text = c("-1", "-0.5", "0", "0.5", "1")),
+  values = c("-1" = "dashed",
+             "-0.5" = "dotdash",
+             "0" = "solid",
+             "0.5" = "dotted",
+             "1" = "longdash"),
+  drop = FALSE
+)
+
+gg[[2]] <- ggplot(dd.ao, aes(x = y, y = h, linetype = lambda)) +
+  geom_line(linewidth = lsz, colour = "black") +
+  coord_cartesian(ylim = c(-6, 6)) +
+  labs(x = "", y = "",
+       linetype = expression(lambda)) +
+  ggtitle("Symmetric AO") +
+  theme(plot.title = element_text(hjust = 0.5),
+        legend.position = "none") + scale_linetype_manual(
+  values = c("-1" = "dashed",
+             "-0.5" = "dotdash",
+             "0" = "solid",
+             "0.5" = "dotted",
+             "1" = "longdash"),
+  drop = FALSE
+)
+
+gg[[3]] <- ggplot(dd.mcja, aes(x = y, y = h, linetype = lambda)) +
+  geom_line(linewidth = lsz, colour = "black") +
+  coord_cartesian(ylim = c(-6, 6)) +
+  labs(x = "Y", y = "",
+       linetype = expression(lambda)) +
+  ggtitle("Asymmetric MCJ") +
+  theme(plot.title = element_text(hjust = 0.5),
+        legend.position = "none") + scale_linetype_manual(
+  values = c("-1" = "dashed",
+             "-0.5" = "dotdash",
+             "0" = "solid",
+             "0.5" = "dotted",
+             "1" = "longdash"),
+  drop = FALSE
+)
+
+
+gg[[4]] <- ggplot(dd.mcjs, aes(x = y, y = h, linetype = lambda)) +
+  geom_line(linewidth = lsz, colour = "black") +
+  coord_cartesian(ylim = c(-6, 6)) +
+  labs(x = "Y", y = expression(h(Y)),
+       linetype = expression(lambda)) +
+  ggtitle("Symmetric MCJ") +
+  theme(plot.title = element_text(hjust = 0.5),
+        legend.position = "none") + scale_linetype_manual(
+  values = c("-1" = "dashed",
+             "-0.5" = "dotdash",
+             "0" = "solid",
+             "0.5" = "dotted",
+             "1" = "longdash"),
+  drop = FALSE
+)
+
+leg <- gtable_filter(ggplotGrob(gg[[1]]), "guide-box")
+
+gg[[1]] <- gg[[1]] + theme(legend.position = "none")
+
+g <- arrangeGrob(gg[[1]], gg[[2]], gg[[3]], gg[[4]], nrow = 2, ncol = 2)
+
+grid.newpage()
+grid.draw(
+arrangeGrob(leg, g, ncol = 1,  heights = c(0.12, 1))
+)
 
 ## R Code 9.3
 
@@ -108,6 +235,40 @@ summary(fit.rqt, conditional = FALSE, se = "nid")
 # CUSUM lack-of-fit test
 LOFTest(fit.rqt, alpha = 0.05, B = 1000, seed = 987)
 
+## Figure 9.3
+
+
+p <- c(.1,.5,.9)
+nt <- length(p)
+
+fit <- tsrq(Ozone ~ Solar.R, data = airquality, tsf = "mcjI", symm = TRUE, dbounded = FALSE, lambda = seq(1, 3, by = 0.005),
+conditional = FALSE, tau = p)
+
+nx <- 200
+xx <- seq(9, 334, length = nx)
+qhat <- predict(fit, newdata = data.frame(Solar.R = xx), type = "response")
+invisible(capture.output(dqhat <- predict(fit, newdata = data.frame(Solar.R = xx), type = "maref", namevec = "Solar.R")))
+
+x <- airquality$Solar.R
+y <- airquality$Ozone
+
+dd <- data.frame(x = x, y = y)
+qq1 <- data.frame(x = rep(xx, nt), y = as.numeric(qhat), p = factor(rep(p, each = nx)))
+qq2 <- data.frame(x = rep(xx, nt), y = as.numeric(dqhat), p = factor(rep(p, each = nx)))
+
+psz <- 2
+lsz <- 1
+transalpha <- 0.4
+
+gg <- list()
+
+gg[[1]] <- ggplot() + geom_point(data = dd, aes(x = x, y = y),  shape = 16, size = psz, alpha = transalpha) +
+geom_line(data = qq1, aes(x = x, y = y, group = p, color = p), linetype = "solid", linewidth = lsz) + scale_color_grey(start = 0.8, end = 0) + theme(legend.position = "none") + xlab("Solar radiation (lang)") + ylab("Ozone (ppb)")
+
+gg[[2]] <- ggplot() + geom_line(data = qq2, aes(x = x, y = y, group = p, color = p), linetype = "solid", linewidth = lsz) + scale_color_grey(start = 0.8, end = 0) + theme(legend.position = "none")  + xlab("Solar radiation (lang)") + ylab("QTE (ppb/lang)")
+
+marrangeGrob(gg, ncol = 2, nrow = 1, top = "")
+
 ###################################################
 ## Section 9.3
 ###################################################
@@ -124,7 +285,7 @@ y <- sin(x) + (1 + x)*rnorm(n, 0, 0.1)
 fit.L2 <- Qtools::qsmspline(x = x, y = y, p = p, lambda = 0.1)
 fit.L1 <- quantreg::rqss(y ~ qss(x, constraint= "N", lambda = 0.1), tau = p)
 
-## Figure 9.3
+## Figure 9.4
 
 psz <- 2
 lsz <- 1
@@ -169,7 +330,7 @@ for(i in 1:n){
     yhat[i] <- quantreg::rq(y ~ x.c, weights = w, tau = p)$coef[1]
 }
 
-## Figure 9.4
+## Figure 9.5
 
 psz <- 2
 lsz <- 1
@@ -206,7 +367,8 @@ library(nlme)
 # fit a generalised least squares regression
 # with exponential var function
 fit <- gls(y ~ x, weights = varExp(form = ~ x))
-# note sigma is estimated by exp(g[1])
+# the fitted scale parameter sigma estimates
+# exp(g[1]) from the data-generating model
 gamma1 <- as.numeric(coef(fit$modelStruct))
 print(thetahat <- c(coef(fit), gamma0 = log(fit$sigma),
 gamma1 = gamma1))
@@ -220,7 +382,7 @@ qhat <- sapply(probs, function(p) qnorm(p, mean = mu, sd = sigma))
 qte <- gamma1*fit$sigma*exp(gamma1*xx)
 qte <- coef(fit)[2] + outer(qte, qnorm(probs), "*")
 
-## Figure 9.5
+## Figure 9.6
 
 psz <- 2
 lsz <- 1
@@ -297,7 +459,7 @@ Q <- function(x, theta, p){
 library(numDeriv)
 qte <- sapply(xx, function(x) grad(func = Q, x, theta = fit$par, p = 0.1))
 
-## Figure 9.6
+## Figure 9.7
 
 psz <- 2
 lsz <- 1
@@ -316,9 +478,6 @@ df$p <- factor(df$Var2)
 
 gg <- ggplot() + geom_point(data = ImmunogG, aes(x = Age, y = IgG),  shape = 16, size = psz, alpha = transalpha) + geom_line(data = df, aes(x = Age, y = value, group = p, color = p), linewidth = lsz) + theme(legend.title = element_blank(), legend.position = "none") + xlab("Age (years)") + ylab("IgG (g/l)")  + scale_color_grey(start = 0.8, end = 0)
 
-
-library(numDeriv)
-
 Q <- function(x, p, theta){
 	mu <- sum(c(1,x)*theta[1:2])
 	sigma <- exp(sum(c(1,x)*theta[3:4]))
@@ -328,7 +487,7 @@ Q <- function(x, p, theta){
 
 qte <- matrix(NA, length(xx), length(probs))
 for(i in 1:length(probs)){
-qte[,i] <- sapply(xx, function(x) grad(func = Q, x, theta = fit$par, p = probs[i]))
+qte[,i] <- sapply(xx, function(x) numDeriv::grad(func = Q, x, theta = fit$par, p = probs[i]))
 }
 colnames(qte) <- probs
 qte <- reshape2::melt(qte)
