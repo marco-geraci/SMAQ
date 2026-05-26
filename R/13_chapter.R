@@ -53,6 +53,25 @@ fit <- lqmm(y ~ 1, random = ~1, group = id, tau = p,
 data = data.frame(y = y, id = id), nK = 11)
 coef(fit)
 
+## Figure 13.1
+
+library(metR)
+
+## grid of p and ICC values
+dd <- expand.grid(
+  p   = seq(0.1, 0.9, by = 0.01),
+  ICC = seq(0.05, 0.95, by = 0.01)
+)
+
+## standardized first-order bias:
+## bias / sigma = 0.5 * ICC/(1-ICC) * qnorm(p)
+dd$bias_std <- 0.5 * dd$ICC / (1 - dd$ICC) * qnorm(dd$p)
+dd$abs_bias_std <- abs(dd$bias_std)
+
+g <- ggplot(dd, aes(x = p, y = ICC, z = bias_std)) + geom_tile(aes(fill = bias_std)) + geom_contour(colour = "black", linewidth = 0.6) + geom_text_contour(colour = "black", skip = 1, nudge_x = 0.01, nudge_y = -0.02, rotate = FALSE) + scale_fill_gradient2(low = "red", mid = "white", high = "blue", midpoint = 0, name = "Standardised bias") + theme_classic()
+
+g
+
 ## R Code 13.2
 
 library(nlme)
@@ -109,6 +128,43 @@ xx <- do.call("rbind", xx)
 delta <- xx[,1] - mean(xx[,1])
 # correlation between RQ deviations and LQMM predicted random effects
 cor(delta, u[[1]])
+
+## Figure 13.2
+
+library(tibble)
+library(ggrepel)
+library(dplyr)
+
+
+u_vec <- as.numeric(unlist(u))
+sp <- rownames(u)
+
+df_plot <- tibble(
+  Species = sp,
+  u = u_vec,
+  delta = as.numeric(delta)
+) %>%
+  mutate(extreme = abs(delta) > quantile(abs(delta), 0.8))
+
+lims <- range(c(df_plot$u, df_plot$delta))
+
+ggplot(df_plot, aes(x = u, y = delta)) +
+  geom_point(size = 2) +
+  geom_abline(intercept = 0, slope = 1,
+              linetype = 2, colour = "grey50") +
+  geom_smooth(method = "lm", se = FALSE,
+              colour = "black", linewidth = 0.6) +
+  geom_text_repel(
+    data = subset(df_plot, extreme),
+    aes(label = Species),
+    size = 3
+  ) +
+  coord_equal(xlim = lims, ylim = lims) +
+  labs(
+    x = "Predicted LQMM random effects",
+    y = "Unpooled RQ estimates"
+  )
+
 
 ## R Code 13.5
 
