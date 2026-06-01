@@ -116,7 +116,7 @@ vcov(fit)) %*% vlogtheta))
 CI <- xi + c(-1,1)*qnorm(1-0.05/2, 0, xi_se)
 c(xi = xi, se = xi_se, low = CI[1], up = CI[2])
 
-## R Code 7.3
+## R Code 7.3/Figure 7.1
 
 set.seed(123)
 n <- 100
@@ -137,14 +137,14 @@ x3 <- seq(-3, 3, by = 0.01)
 y3 <- dnorm(x3)
 
 # plot results
-gg <- ggplot() + geom_line(aes(x = x1, y = y1), linetype = "dashed") +
+g <- ggplot() + geom_line(aes(x = x1, y = y1), linetype = "dashed") +
 geom_line(aes(x = x2, y = y2), linetype = "dotted") +
 geom_line(aes(x = x3, y = y3), linetype = "solid") + xlab("y") +
 ylab("Density")
 
-gg
+g
 
-## R Code 7.4
+## R Code 7.4/Figure 7.2
 
 library(Qtools)
 set.seed(123)
