@@ -363,13 +363,13 @@ p <- c(0.25, .5, .75, .9, .95, .99)
 # estimate quantiles and 95% CI based on 1000 bootstrap replications
 set.seed(321)
 system.time(Qhat <- discreteQ(y, bsrep = 1000, alpha = 0.05))
-cbind(est = Qhat$Q(p), lower = Qhat$lb.Q(p), upper = Qhat$ub.Q(p))
 # estimate mid-quantiles and 95% CIs
 system.time({midQ <- midquantile(y, probs = p);
   midQci <- confint(midQ, level = 0.95)})
-midQci
 # recover quantiles from mid-quantiles
 as.numeric(midq2q(midQ))
+# and compare with Qhat
+as.numeric(Qhat$Q(p))
 
 ## Table 7.2
 
@@ -435,14 +435,14 @@ ci <- melt(zhat + outer(qnorm(0.975, 0, se), c(-1,1), FUN = "*"))
 ci$xit <- rep(xit, 2)
 
 # plot results
-gg <- ggplot() + geom_point(aes(x = xit, y = z)) +
+g <- ggplot() + geom_point(aes(x = xit, y = z)) +
 geom_line(data = ci, aes(x = xit, y = value, group = Var2),
 linetype = "dashed") + geom_abline(intercept = int, slope = slope) +
 xlab("Theoretical") + ylab("Empirical") + xlim(0, 2.45) + ylim(0, 2.45)
 
 ## Figure 7.4
 
-gg
+g
 
 ###################################################
 ## Section 7.2
