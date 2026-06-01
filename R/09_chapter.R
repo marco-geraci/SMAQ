@@ -94,6 +94,7 @@ summary(fit.rq, se = "boot", R = 200)
 
 
 library(grid)
+library(gtable)
 
 lambda <- c(-1, -0.5, 0, 0.5, 1)
 lambda_pos <- c(0, 0.5, 1)
