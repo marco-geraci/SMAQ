@@ -4,8 +4,8 @@
 
 This repository contains the R code used to reproduce analyses, figures, tables, and simulations from the book
 
-> **Statistical Methods and Applications Using Quantiles**  
-> Marco Geraci
+**Statistical Methods and Applications Using Quantiles**  
+Marco Geraci
 
 The material is provided for research, educational, and scholarly purposes.
 
@@ -47,9 +47,7 @@ The author makes no guarantee that the code is free from errors or suitable for 
 
 If you use this material in academic work, please cite:
 
-Geraci, M. (2026).  
-*Statistical Methods and Applications Using Quantiles*.  
-Chapman & Hall/CRC.
+Geraci, M. (2026). *Statistical Methods and Applications Using Quantiles*. Chapman & Hall/CRC.
 
 ---
 
