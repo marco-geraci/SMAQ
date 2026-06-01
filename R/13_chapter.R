@@ -171,6 +171,48 @@ ggplot(df_plot, aes(x = u, y = delta)) +
 load(file = "../data/internet.Rdata")
 summary(internet)
 
+## Figure 13.5
+
+library(ggrepel)
+tt <- table(internet$iso3)
+sel <- names(tt)[tt > 29] # plot longer trajectories
+dds <- subset(internet, internet$iso3 %in% sel)
+highlight <- c("CHN", "IND", "ITA", "USA")
+
+labdat <- subset(dds, iso3 %in% highlight)
+labdat$iso3 <- droplevels(labdat$iso3)
+labdat <- tapply(labdat$year, labdat$iso3, max)
+labdat <- melt(labdat)
+names(labdat) <- c("iso3","year")
+labdat <- merge(labdat, dds, all.x = TRUE, all.y = FALSE)
+
+colg <- "grey70"
+
+g <- ggplot(dds, aes(x = year, y = percentage, group = iso3)) +
+  geom_line(color = colg, alpha = 0.2, linewidth = 0.8) +
+  geom_line(
+    data = subset(dds, iso3 %in% highlight),
+    linewidth = 1.2,
+    color = "black"
+  ) +
+  geom_text_repel(
+    data = labdat,
+    aes(label = iso3),
+    max.overlaps = Inf,
+    direction = "y",
+    hjust = 0,
+    nudge_x = 0,
+    segment.color = "grey50",
+    size = 3
+  ) +
+  facet_wrap(~ incomegr) +
+  theme(legend.position = "none") +
+  xlab("Year") +
+  ylab("Internet adoption rate (percent)") + theme(strip.background = element_rect(colour = colg, fill = colg), strip.text = element_text(face = "bold", size = 13))
+
+g
+
+
 ## R Code 13.6
 
 # define z

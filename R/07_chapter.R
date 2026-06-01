@@ -197,7 +197,106 @@ ci <- xi + outer(qnorm(1-alpha/2, 0, se), c(-1,1), FUN = "*")
 # print results
 c(xi = xi, low = ci[1], up = ci[2])
 
-## R Code 7.5
+## Figure 7.3
+
+# simulation
+
+library(foreach)
+library(doSNOW)
+library(parallel)
+
+
+boot.fn <- function(x, i, p) quantile(x[i], probs = p, type = 1)
+
+density.fn <- function(x, bw, kernel, probs, from, to){
+	xi <- quantile(x = x, probs = probs, names = FALSE)
+	if(missing(from) & missing(to)){ 
+	out <- density(x = x, bw = bw, kernel = kernel)
+	}
+	if(!missing(from) & missing(to)){ 
+	out <- density(x = x, bw = bw, kernel = kernel, from = from)
+	}
+	if(missing(from) & !missing(to)){ 
+	out <- density(x = x, bw = bw, kernel = kernel, to = to)
+	}
+	if(!missing(from) & !missing(to)){ 
+	out <- density(x = x, bw = bw, kernel = kernel, from = from, to = to)
+	}
+	approx(x = out$x, y = out$y, xout = xi)$y
+}
+
+gn <- function(x, k, rate){
+	factorial((2*k+1))/factorial(k)^2*pexp(x, rate = rate)^(k)*(1 - pexp(x, rate = rate))^(k)*dexp(x, rate = rate)
+}
+
+gn0 <- function(x, p, k, rate){
+	p - integrate(f = gn, lower = 0, upper = x, k = k, rate = rate)$val
+}
+
+
+set.seed(123)
+
+R <- 10000
+n <- c(100, 1000, 5000)
+p <- c(0.1, 0.5)
+alpha <- 0.05
+bw <- c("nrd0", "SJ", "ucv")
+Ks <- c("gaussian", "epanechnikov", "rectangular", "triangular", "biweight", "cosine", "optcosine")
+dist <- c("norm", "chisq", "beta")
+
+out_sim_01 <- expand.grid(bw = bw, K = Ks, p = p, dist = dist, n = n, stringsAsFactors = FALSE)
+ns <- nrow(out_sim_01)
+
+cl <- makeCluster(detectCores() - 1)
+registerDoSNOW(cl)
+out_sim_01$coverage <- foreach(s = 1:ns, .combine = "c", .export = c("out_sim_01", "density.fn")) %dopar% {
+
+library(Qtools)
+
+sel <- out_sim_01[s,]
+
+theta <- switch(sel$dist,
+		"norm" = c(mean = 0, sd = 1),
+		"chisq" = c(df = 3),
+		"beta" = c(shape1 = 0.5, shape2 = 0.5))
+
+r <- switch(sel$dist,
+		"chisq" = c(from = 0),
+		"beta" = c(from = logit(0.001), to = logit(0.999)))
+
+args <- c(list(bw = sel$bw, kernel = sel$K, probs = sel$p), as.list(r))
+
+Y <- replicate(R, do.call(paste0("r", sel$dist), args = c(list(n = sel$n), as.list(theta))))
+if(sel$dist == "beta") Y <- apply(Y, 2, Qtools::logit)
+
+Q <- do.call(paste0("q", sel$dist), args = c(list(p = sel$p), as.list(theta)))
+if(sel$dist == "beta") Q <- logit(Q)
+
+xi <- apply(Y, 2, quantile, probs = sel$p)
+
+fhat <- apply(Y, 2, function(y, args) do.call("density.fn", args = c(list(x = y), args)), args = args)
+
+se <- sqrt(sel$p*(1-sel$p)/sel$n)*1/fhat
+ci <- sweep(outer(qnorm(1-alpha/2, 0, se), c(-1,1), FUN = "*"), 1, xi - Q)
+out <- mean((ci[,1]*ci[,2]) < 0, na.rm = TRUE)
+return(out)
+}
+stopCluster(cl)
+
+ds <- c("Normal", "Chi-squared", "Beta")
+p <- c(0.1, 0.5)
+n <- c(100, 1000, 5000)
+out_sim_01$dist <- factor(out_sim_01$dist, levels = c("norm", "chisq", "beta"), labels = ds)
+out_sim_01$gr <- paste(out_sim_01$dist, " (", out_sim_01$p, ")", sep = "")
+out_sim_01$gr <- factor(out_sim_01$gr, levels = paste0(rep(ds, each = 2), " (", rep(p, 2), ")"))
+
+colg <- "grey70"
+lsz <- 1
+
+ggplot(data = out_sim_01, aes(x = n, y = coverage, group = bw, colour = bw)) + geom_line() + facet_grid(gr ~ K) + scale_x_continuous(name = "Sample size", breaks = n) + ylab("Coverage") + geom_hline(yintercept = 1- alpha, colour = colg, linewidth = lsz, linetype = "dashed") + theme(legend.position = "top", legend.text = element_text(size = 12), legend.title = element_text(size = 14), strip.background = element_rect(colour = colg, fill = colg), strip.text = element_text(face = "bold", size = 12), axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+
+
+## R Code 7.6
 
 set.seed(123)
 n <- 100
@@ -295,7 +394,6 @@ paste0('{\\bfseries ', x, '}')
 }
 
 print.xtable(xtable(tab2, digits = dig, align = c("l",rep("r",7)), caption = c("Ordinary quantiles and mid-quantiles with $95\\%$ confidence intervals of number of fatal vehicle crashes as estimated in R Code \\ref{code:07_09}.")), caption.placement="top", booktabs = TRUE, math.style.negative = TRUE, type="latex", comment=FALSE, add.to.row = addtorow, include.rownames = FALSE, include.colnames = FALSE, hline.after = NULL, sanitize.text.function = identity)
-
 
 ## R Code 7.10
 

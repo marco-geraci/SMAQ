@@ -138,9 +138,8 @@ apply(V, 3, function(x) sqrt(diag(x)))
 
 ## Code fragment
 
-e <- lm(y ~ x)$residuals
-1/dnorm(qnorm(p, 0, sd(e)), 0, sd(e))
-
+sigma <- summary(lm(y ~ x))$sigma
+1/dnorm(qnorm(p, 0, sigma), 0, sigma)
 
 ## R Code 8.6
 
@@ -337,6 +336,32 @@ Qhat <- predict(rq(dist ~ speed, data = cars, tau = c(0.975-h, 0.975+h)))
 dQ <- apply(Qhat, 1, diff)
 dQ[which(!(dQ > 0))]
 cars[which(!(dQ > 0)),]
+
+## Figure 8.12
+
+psi <- function (x, y, p)
+{
+    ind <- ifelse((y - x) < 0, 1, 0)
+    mean((y - x) * (p - ind))
+}
+
+set.seed(123)
+n <- 2000
+mu <- 5
+sigma <- 2
+p <- 0.75
+
+y <- rnorm(n, mu, sigma)
+x1 <- sort(y)
+x2 <- round(x1)
+
+of1 <- mapply(psi, x = x1, MoreArgs = list(p = p, y = x1))
+of2 <- mapply(psi, x = x2, MoreArgs = list(p = p, y = x2))
+
+dd <- data.frame(x = c(x1, x1), y = c(of1, of2), gr = factor(rep(1:2, each = n)))
+
+gg <- ggplot(dd, aes(x = x, y = y, group = gr)) + geom_line(aes(linetype = gr)) + xlab(expression(xi)) + ylab(bquote(psi[.(p)])) + ggtitle("") + theme(legend.position = "none")
+gg
 
 ## R Code 8.17
 

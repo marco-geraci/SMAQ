@@ -109,23 +109,23 @@ g
 
 ## R Code 12.3
 
-# fit logistic regression on LBW indicator
-# conditional on multiple birth status (x = 0 if singleton)
 nrow(USbirths2001) # about 3.5 million
+# define variables
 y <- USbirths2001$bw
 d <- 1*(y < 2500)
 x <- 1*(USbirths2001$multiple == 1)
-
+# multiple birth prevalence in the population
+print(px <- mean(x))
+# LBW prevalence in the population (unconditional)
+print(LBW <- mean(d))
 # LBW prevalence conditional on multiple status
-print(pi0 <- mean(d[x == 0])) # (intercept conditional model)
+print(pi0 <- mean(d[x == 0])) # compare with lm intercept
 print(pi1 <- mean(d[x == 1]))
-# LBW prevalence difference (slope conditional model)
-print(dp <- pi1 - pi0)
+# LBW prevalence difference between groups
+print(dp <- pi1 - pi0) # compare with lm slope
 # probability linear model
 fit <- lm(d ~ x)
 fit
-# LBW prevalence in the population (unconditional)
-mean(d)
 # expected percentage points change of LBW in the population
 # for a change du in the singleton/multiple composition
 du <- 0.1
@@ -133,26 +133,17 @@ du <- 0.1
 
 ## R Code 12.4
 
-y <- USbirths2001$bw
-x <- 1*(USbirths2001$multiple == 1)
-# multiple birth prevalence
-print(px <- mean(x))
-# LBW prevalence by sex
-print(LBW0 <- mean(y[x == 0] <= 2500))
-print(LBW1 <- mean(y[x == 1] <= 2500))
-# LBW prevalence in the population
-print(LBW <- mean(y <= 2500))
-# define quantile levels
-p <- round(c(LBW0, LBW), 3)
+# use LBW prevalences (conditional and unconditional) as quantile levels
+p <- round(c(pi0, LBW, pi1), 3)
 # fit unconditional and conditional QR
-res <- matrix(NA, length(p), 2)
-rownames(res) <- p
-colnames(res) <- c("UQR", "QR")
+res <- matrix(NA, length(p), 3)
+res[,1] <- p
+colnames(res) <- c("p", "UQR", "QR")
 for(j in 1:length(p)){
 xi <- quantile(y, p[j])
 fhat <- density(y)
 w <- xi + (p[j] - 1*(y <= xi))/approxfun(fhat$x, fhat$y)(xi)
-res[j,1] <- lm(w ~ x)$coef[2]
-res[j,2] <- rq(y ~ x, tau = p[j], method = "fn")$coef[2]
+res[j,2] <- round(lm(w ~ x)$coef[2])
+res[j,3] <- round(rq(y ~ x, tau = p[j], method = "fn")$coef[2])
 }
-round(res)
+res

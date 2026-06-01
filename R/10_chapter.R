@@ -53,7 +53,7 @@ qhat3 <- sapply(probs, function(p) qnbinom(p, size = fit3$theta, mu = mu))
 nr3 <- apply(sweep(-qhat3, 1, y, "+") < 0, 2, mean)*100
 
 
-nn <- c("Residual deviance (df)", "AIC", "Dispersion test p-value", "NB overdispersion", "PNR")
+nn <- c("Residual deviance (df)", "AIC", "Dispersion test $p$-value", "NB overdispersion", "PNR")
 
 p1 <- round(AER::dispersiontest(fit1)[["p.value"]], 3)
 p1 <- if(p1 < 0.001) "< 0.001"
@@ -97,7 +97,7 @@ addtorow$command <- c(
 "\\bottomrule"
 )
 
-print.xtable(xtable(tab1, digits = c(0,0,0,2), align = c(rep("l",1),rep("r",3)), caption = c("Summary statistics for the generalised linear models fitted in the Esterase Assay dataset: residual deviance (degrees of freedom), Akaike information criterion (AIC), overdispersion test $p$-value, negative binomial (NB) overdispersion parameter, proportion of negative residuals (PNR, $\\%$) at three conditional quantiles ($p \\in\\{0.1,0.5,0.9\\}$).")), caption.placement="top", booktabs = TRUE, math.style.negative = TRUE, type="latex", comment=FALSE, add.to.row = addtorow, include.colnames = FALSE, hline.after = NULL, format.args = list(big.mark = ",", decimal.mark = "."))
+print.xtable(xtable(tab1, digits = c(0,0,0,2), align = c(rep("l",1),rep("r",3)), caption = c("Summary statistics for the generalised linear models fitted in the Esterase Assay dataset: residual deviance (degrees of freedom), Akaike information criterion (AIC), overdispersion test $p$-value, negative binomial (NB) overdispersion parameter, proportion of negative residuals (PNR, $\\%$) at three conditional quantiles ($p \\in\\{0.1,0.5,0.9\\}$).")), caption.placement="top", booktabs = TRUE, math.style.negative = TRUE, type="latex", comment=FALSE, add.to.row = addtorow, include.colnames = FALSE, hline.after = NULL, format.args = list(big.mark = ",", decimal.mark = "."), sanitize.rownames.function = identity)
 
 ## Figure 10.2
 
@@ -194,7 +194,7 @@ g <- ggplot() +
   ) +
   coord_cartesian(ylim = c(0, 1350)) +
   scale_color_grey(start = 0.8, end = 0) +
-  labs(x = "Esterase", y = "Number of bindings") +
+  labs(x = "Esterase concentration", y = "Number of bindings") +
   theme(legend.position = "none",
     strip.background = element_rect(colour = colg, fill = colg), strip.text = element_text(face = "bold", size = 13)
   )
@@ -220,9 +220,15 @@ mu <- fitted(fit.nb)
 qhat <- sapply(probs, function(p) qnbinom(p, size = fit.nb$theta, mu = mu))
 # number of negative residuals
 print(nr <- apply(sweep(-qhat, 1, dd$y, "+") < 0, 2, sum))
-n <- nrow(esterase)
-# p-value of test of the PNR at the median (probs[2])
-binom.test(nr[2], n, p = probs[2])$p.value
+# select the median
+j <- 2
+# exact probabilities under the fitted negative binomial model
+pi_hat <- pnbinom(qhat[, j] - 1, size = fit.nb$theta, mu = mu)
+# simulation-based exact p-value for the Poisson-binomial null
+set.seed(123)
+B <- 100000
+Tb <- rowSums(matrix(runif(B * length(pi_hat)), B) < rep(pi_hat, each = B))
+2 * min(mean(Tb <= nr[j]), mean(Tb >= nr[j]))
 
 ###################################################
 ## Section 10.2
@@ -265,7 +271,7 @@ df <- reshape2::melt(qhat)
 df$x <- rep(xx, length(probs))
 df$p <- factor(df$Var2)
 
-g <- ggplot() + geom_point(data = dd, aes(x = logx, y = y),  shape = 16, size = psz, alpha = transalpha) + geom_line(data = df, aes(x = x, y = value, group = p, color = p), linewidth = lsz) + scale_color_grey(start = 0.8, end = 0) + theme(legend.title = element_blank(), legend.position = "none") + scale_x_continuous(expression(paste("Esterase (", log[2], ")"))) + ylab("Number of bindings") + ylim(c(0,1200))
+g <- ggplot() + geom_point(data = dd, aes(x = logx, y = y),  shape = 16, size = psz, alpha = transalpha) + geom_line(data = df, aes(x = x, y = value, group = p, color = p), linewidth = lsz) + scale_color_grey(start = 0.8, end = 0) + theme(legend.title = element_blank(), legend.position = "none") + scale_x_continuous(expression(paste("Esterase concentration (", log[2], ")"))) + ylab("Number of bindings") + ylim(c(0,1200))
 g
 
 ## R Code 10.4
@@ -331,18 +337,25 @@ dd <- fars
 dd$offset <- log(ifelse(dd$weekend == 1, 2, 5))
 # replace zero counts with small constant
 dd$y <- ifelse(dd$count == 0, 0.1, dd$count)
-# transform longitude and latitude
+# transform longitude and latitude degrees to radians
 theta_c <- 37.5*pi/180
 phi_c <- -96.5*pi/180
 lat_rad <- dd$latitude*pi/180
 lon_rad <- dd$longitude*pi/180
+# centre coordinates around reference location
 dd$lat_cos <- cos(lat_rad) - cos(theta_c)
 dd$lat_sin <- sin(lat_rad) - sin(theta_c)
 dd$lon_cos <- cos(lon_rad) - cos(phi_c)
 dd$lon_sin <- sin(lon_rad) - sin(phi_c)
 
-fit.midrq <- midrq(y ~ weekend + lat_cos + lat_sin + lon_cos + lon_sin, tau = c(0.75, 0.9), data = dd, offset = dd$offset, lambda = 0, control = midrqControl(ecdf_est = "logit"))
+## R Code 10.8
 
+# fit mid-quantile regression with log-transformation (Box-Cox lambda = 0)
+# mid-probabilities estimated via logistic regression (ecdf_est = "logit")
+fit.midrq <- midrq(y ~ weekend + lat_cos + lat_sin + lon_cos + lon_sin,
+tau = c(0.75, 0.9), data = dd, offset = dd$offset, lambda = 0,
+control = midrqControl(ecdf_est = "logit"))
+# summary with numerical approximation of variance-covariance
 summary(fit.midrq, numerical = TRUE)
 # mid-probability range
 attr(fit.midrq$midFit$G, "range")

@@ -81,10 +81,6 @@ summary(fit, se = "boot", R = 200)
 
 ## Figure 11.1
 
-colg <- "grey70"
-psz <- 2
-transalpha <- 0.4
-
 data(NHANES, package = "NHANES")
 dds <- NHANES[,c("Age", "Gender", "BPSysAve")]
 dds <- subset(dds, complete.cases(dds))
@@ -103,6 +99,10 @@ dd <- melt(res)
 dd$Age <- rep(xx, 6)
 dd$BPSysAve <- dd$value
 dd$p <- factor(dd$p)
+
+colg <- "grey70"
+psz <- 2
+transalpha <- 0.1
 
 g <- ggplot() + geom_point(data = dds, aes(x = Age, y = BPSysAve), alpha = transalpha, colour = colg, size = psz) + geom_line(data = dd, aes(x = Age, y = BPSysAve, group = p), linewidth = 1.2) + facet_wrap(~Gender) + xlab("Age (years)") + ylab("Systolic blood pressure (mmHg)") + theme(strip.background = element_rect(colour = colg, fill = colg), strip.text = element_text(face = "bold", size = 13))
 g
@@ -368,7 +368,7 @@ res2$Q90 <- Qhat[,2]
 res2$Quantile_ratio <- res2$Q90/res2$Q10
 res2$SE_ratio <- sqrt(qr_var(fit2, res2, se = "nid"))
 
-## Tail means using a Riemann approximation
+## Tail means using a Riemann-sum approximation
 Qhat <- predict(fitL, newdata = res2)
 res2$lower_mean <- rowSums(Qhat*dpL)/sum(dpL)
 Qhat <- predict(fitU, newdata = res2)
@@ -388,9 +388,10 @@ tab[c(4:7,9:12),1] <- ""
 addtorow <- list()
 addtorow$pos <- list(-1,0,0,0,0,2,2,7,7,nrow(tab))
 addtorow$command <- c("\\toprule",
-" Sex & Age & \\multicolumn{1}{c}{Q(10)} & \\multicolumn{1}{c}{Q(90)} & \\multicolumn{1}{c}{Quantile} & \\multicolumn{1}{c}{SE} & \\multicolumn{1}{c}{$\\mu_{L}$} & \\multicolumn{1}{c}{$\\mu_{U}$} & \\multicolumn{1}{c}{Tail ratio} & \\multicolumn{1}{c}{SE}\\\\",
+" Sex & Age & \\multicolumn{1}{c}{$Q(0.1)$} & \\multicolumn{1}{c}{$Q(0.9)$} & \\multicolumn{1}{c}{Quantile} & \\multicolumn{1}{c}{SE} & \\multicolumn{1}{c}{$\\mu_{L}$} & \\multicolumn{1}{c}{$\\mu_{U}$} & \\multicolumn{1}{c}{Tail ratio} & \\multicolumn{1}{c}{SE}\\\\",
 " &  &  &  & \\multicolumn{1}{c}{ratio} &  &  & &  & \\\\",
 "\\cmidrule(l){3-6}","\\cmidrule(l){7-10}","\\cmidrule(l){3-6}","\\cmidrule(l){7-10}", "\\cmidrule(l){3-6}","\\cmidrule(l){7-10}","\\bottomrule"
 )
 
-print.xtable(xtable(tab, digits = c(0,0,0,0,0,2,2,0,0,2,2), align = c(rep("l",3),rep("r",8)), caption = c("Tail quantiles, 90:10 quantile ratio, lower- and upper-tail means ($\\mu_{L}$ and $\\mu_{U}$, respectively), and 90:10 tail ratio of income by sex and by sex and age, with standard error (SE) of the ratios, using the IPUMS income data, United States, 2024.")), caption.placement="top", booktabs = TRUE, math.style.negative = TRUE, type="latex", comment=FALSE, add.to.row = addtorow, include.rownames = FALSE, include.colnames = FALSE, hline.after = NULL, format.args = list(big.mark = ",", decimal.mark = "."))
+
+print.xtable(xtable(tab, digits = c(0,0,0,0,0,2,2,0,0,2,2), align = c(rep("l",3),rep("r",8)), caption = c("Tail quantiles, 90:10 quantile ratio, lower- and upper-tail means ($\\mu_{L}$ and $\\mu_{U}$, respectively), and 90:10 tail ratio of income by sex and by sex and age, with standard error (SE) of the ratios, using the IPUMS income data, United States, 2024.\\label{tab:11_01}")), caption.placement="top", booktabs = TRUE, math.style.negative = TRUE, type="latex", comment=FALSE, add.to.row = addtorow, include.rownames = FALSE, include.colnames = FALSE, hline.after = NULL, format.args = list(big.mark = ",", decimal.mark = "."), sanitize.rownames.function = identity)
