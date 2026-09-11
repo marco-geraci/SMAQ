@@ -388,9 +388,11 @@ dd2 <- subset(dd, dd$weekend == 1)
 center_point <- data.frame(lon = -96.5, lat = 37.5, label = "Geographic reference")
 center_proj <- usmap_transform(center_point)
 
-my_gradient <- scale_fill_gradient(low = "grey100", high = "black", name = "", na.value = "white", limits = c(global_min, global_max))
+cls <- c("lightgrey", "grey", "black")
 
-plot_usmap(regions = "counties", values = "pred", data = dd1, exclude = c("Alaska", "Hawaii")) + geom_sf(data = center_proj, color = "red", size = 3, shape = 17, fill = "red") + theme(panel.background=element_blank(), legend.position = "right") + my_gradient + theme_void()
+my_gradient <- scale_fill_gradientn(colours = cls, name = "", na.value = "white", limits = c(global_min, global_max))
+
+plot_usmap(regions = "counties", values = "pred", data = dd1, exclude = c("Alaska", "Hawaii")) + geom_sf(data = center_proj, color = "black", size = 3.8, shape = 17, fill = "red") + theme(panel.background=element_blank(), legend.position = "right") + my_gradient + theme_void()
 
 
 ## Figure 10.8

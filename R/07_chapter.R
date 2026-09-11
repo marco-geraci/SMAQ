@@ -205,9 +205,6 @@ library(foreach)
 library(doSNOW)
 library(parallel)
 
-
-boot.fn <- function(x, i, p) quantile(x[i], probs = p, type = 1)
-
 density.fn <- function(x, bw, kernel, probs, from, to){
 	xi <- quantile(x = x, probs = probs, names = FALSE)
 	if(missing(from) & missing(to)){ 
@@ -290,10 +287,13 @@ out_sim_01$dist <- factor(out_sim_01$dist, levels = c("norm", "chisq", "beta"), 
 out_sim_01$gr <- paste(out_sim_01$dist, " (", out_sim_01$p, ")", sep = "")
 out_sim_01$gr <- factor(out_sim_01$gr, levels = paste0(rep(ds, each = 2), " (", rep(p, 2), ")"))
 
+alpha <- 0.05
 colg <- "grey70"
-lsz <- 1
+lsz <- 1.1
 
-ggplot(data = out_sim_01, aes(x = n, y = coverage, group = bw, colour = bw)) + geom_line() + facet_grid(gr ~ K) + scale_x_continuous(name = "Sample size", breaks = n) + ylab("Coverage") + geom_hline(yintercept = 1- alpha, colour = colg, linewidth = lsz, linetype = "dashed") + theme(legend.position = "top", legend.text = element_text(size = 12), legend.title = element_text(size = 14), strip.background = element_rect(colour = colg, fill = colg), strip.text = element_text(face = "bold", size = 12), axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+
+ggplot(data = out_sim_01, aes(x = n, y = coverage, group = bw, colour = bw, linetype = bw)) + geom_line(linewidth = 1) + facet_grid(gr ~ K) + scale_x_continuous(name = "Sample size", breaks = n) + scale_colour_discrete(name = "Bandwidth selector") + scale_linetype_discrete(name = "Bandwidth selector") + ylab("Coverage") + geom_hline(yintercept = 1- alpha, colour = colg, linewidth = lsz, linetype = "dotted") + scale_y_continuous(limits = c(0.88, 0.99), breaks = c(0.90, 0.93, 0.95, 0.97)) + theme(legend.position = "top", legend.key.width = unit(2.5, "line"), legend.spacing.x = unit(1.0, 'cm'), legend.text = element_text(size = 15), legend.title = element_text(size = 15), strip.background = element_rect(colour = colg, fill = colg), strip.text = element_text(face = "bold", size = 11), axis.text.x = element_text(size = 14, angle = 90, vjust = 0.5, hjust=1), axis.text.y = element_text(size = 14), axis.title.x = element_text(size = 16), axis.title.y = element_text(size = 16),  panel.grid.major.x = element_line(), panel.grid.minor.x = element_blank(), panel.grid.major.y = element_blank(), panel.grid.minor.y = element_blank()) 
+
 
 
 ## R Code 7.6
