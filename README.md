@@ -3,6 +3,6 @@ Companion repository for Statistical Methods and Applications Using Quantiles, c
 
 ## Citation
 
-Geraci M. *Statistical Methods and Applications Using Quantiles*.
-Chapman & Hall/CRC.
+Geraci M. (2027) *Statistical Methods and Applications Using Quantiles*.
+Chapman & Hall/CRC, Boca Raton, FL.
 Companion repository: https://github.com/marco-geraci/SMAQ
